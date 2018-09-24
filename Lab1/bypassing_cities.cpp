@@ -13,23 +13,52 @@ struct City
 };
 
 
-void bc(int cur_city, int arrival, City *cities, int count_cities, int **relations, int count_relations, bool * exists)
+struct Graph
+{
+	//default constructor
+	Graph() : cities(NULL), relations(NULL)
+	{}
+	Graph(int count_cities, int count_rel) : count_cities(count_cities), count_rel(count_rel)
+	{
+		cities = new City[count_cities];
+		relations = new int *[count_rel];
+		for(int i = 0; i < count_rel; ++i)
+			relations[i] = new int[PAIR];
+	}
+	~Graph()
+	{
+		delete[] cities;
+		for(int i = 0; i < count_rel; ++i)
+			delete[] relations[i];
+		delete[] relations;
+	}
+	City *cities;
+	int **relations;
+	int count_cities;
+	int count_rel;
+};
+
+
+void bc(Graph &graph, int cur_city, int arrival, bool * exists)
 {
 	if(cur_city == arrival)
 		*exists = true;
-	for(int i = 0; i < count_relations; ++i)
-		if(relations[i][0] == cur_city && !cities[relations[i][1]].visited)
-		{	
-			cities[relations[i][1]].visited = true;
-			cout << relations[i][0] << "-->" << relations[i][1] << endl; //log informations
-			bc(relations[i][1], arrival, cities, count_cities, relations, count_relations, exists);
-		}
-		else if(relations[i][1] == cur_city && !cities[relations[i][0]].visited)
-		{
-			cities[relations[i][0]].visited = true;
-			cout << relations[i][1] << "-->" << relations[i][0] << endl; //log informations
-			bc(relations[i][0], arrival, cities, count_cities, relations, count_relations, exists);
-		}	
+	else
+	{
+		for(int i = 0; i < graph.count_rel; ++i)
+			if(graph.relations[i][0] == cur_city && !graph.cities[graph.relations[i][1]].visited)
+			{	
+				graph.cities[graph.relations[i][1]].visited = true;
+				cout << graph.relations[i][0] << "-->" << graph.relations[i][1] << endl; //log informations
+				bc(graph, graph.relations[i][1], arrival, exists);
+			}
+			else if(graph.relations[i][1] == cur_city && !graph.cities[graph.relations[i][0]].visited)
+			{
+				graph.cities[graph.relations[i][0]].visited = true;
+				cout << graph.relations[i][1] << "-->" << graph.relations[i][0] << endl; //log informations
+				bc(graph, graph.relations[i][0], arrival, exists);
+			}	
+	}
 }
 
 
@@ -41,20 +70,15 @@ int main()
 	cin >> count_cities;
 	cout << "Enter count roads between cities: ";
 	cin >> count_rel;
-	City *cities = new City[count_cities];
-	for(int i = 0; i < count_cities; ++i)
-		cout << cities[i].visited << endl;
-	int **relations = new int *[count_rel];
-	for(int i = 0; i < count_rel; ++i)
-		relations[i] = new int[PAIR];
+	Graph graph(count_cities, count_rel);	
 	//input pairs
 	cout << "Enter pairs in format <city1> <city2>" << endl;
 	for(int i = 0; i < count_rel; ++i)
 		for(int j = 0; j < PAIR; ++j)
-			cin >> relations[i][j];
+			cin >> graph.relations[i][j];
 	cout << "Relations: " << endl;	
 	for(int i = 0; i < count_rel; ++i)
-		cout << "[" << relations[i][0] << ", " << relations[i][1] << "]" << endl;
+		cout << "[" << graph.relations[i][0] << ", " << graph.relations[i][1] << "]" << endl;
 	bool exists = false; //variable which will be true after bypassing relations between cities if road exists
 	int cur_city;
 	int arrival;
@@ -62,12 +86,12 @@ int main()
 	cin >> cur_city;
 	cout << "Enter arrival city: ";
 	cin >> arrival;
-	cities[cur_city].visited = true;
-	bc(cur_city, arrival, cities, count_cities, relations, count_rel, &exists);
+	graph.cities[cur_city].visited = true;
+	bc(graph, cur_city, arrival, &exists);
 	if(exists)
 		cout << "Way exists!" << endl;
 	else
 		cout << "Way doesn't exist!" << endl;
-
+	
 	return 0;
 }
